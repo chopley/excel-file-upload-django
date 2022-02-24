@@ -6,4 +6,5 @@ app_name = "myapp"
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('excel_download', views.excel_download, name='excel_download'),
 ]
