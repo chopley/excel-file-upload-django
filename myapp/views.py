@@ -3,7 +3,8 @@ import pandas as pd
 import xlsxwriter
 from io import BytesIO
 from django.http.response import HttpResponse
-import time
+import datetime
+from tzlocal import get_localzone
 
 
 def index(request):
@@ -35,7 +36,8 @@ def excel_download(request):
             output = pd.concat([output, group_val])
         output.columns = ['Count']
 
-        timestr = time.strftime("%Y%m%d-%H%M%S")
+        timestr = datetime.datetime.now().astimezone(get_localzone()).strftime('%Y%m%d-%H%M%S')
+
         sheet_name = 'Sheet1'
         with BytesIO() as b:
             # Use the StringIO object as the filehandle.
