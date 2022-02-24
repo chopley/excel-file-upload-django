@@ -21,11 +21,7 @@
         <p></p>
         <hr>
 
-        {% for row in excel_data %}
-            {% for cell in row %}
-                {{ cell }}&nbsp;&nbsp;
-            {% endfor %}
-            <br>
-        {% endfor %}
+        {{excel_data|safe}}
+
     </body>
 </html>
