@@ -5,6 +5,7 @@ from io import BytesIO
 from django.http.response import HttpResponse
 import datetime
 from tzlocal import get_localzone
+import re
 
 
 def index(request):
@@ -28,17 +29,23 @@ def excel_download(request):
         return render(request, 'myapp/index.html', {})
     else:
         excel_file = request.FILES["excel_file"]
-        dfs = pd.read_excel(excel_file, sheet_name='Sheet1')
-        field_names = ["First Collection", "Second Collection", "Third Collection"]
+        dfs = pd.read_excel(excel_file, sheet_name='Schedule')
+        columns = list(dfs.columns)
+        r = re.compile(".*Collection")
+        collections = list(filter(r.match, columns))  # Read Note below
+
         output = pd.DataFrame()
-        for field in field_names:
-            group_val = pd.DataFrame(dfs.groupby([field, "Farm", "House"]).size())
+        for field in collections:
+            group_val = pd.DataFrame(dfs.groupby([field, "Farm", "House"], as_index=False).size()).reset_index()
+            group_val = group_val.rename(columns={field: "Collection_date"})
+            group_val["Collection"] = field
             output = pd.concat([output, group_val])
-        output.columns = ['Count']
+        output = output.drop(labels=["size", "index"], axis=1)
+        output = output.set_index(['Collection_date', 'Farm', "House"])
 
         timestr = datetime.datetime.now().astimezone(get_localzone()).strftime('%Y%m%d-%H%M%S')
 
-        sheet_name = 'Sheet1'
+        sheet_name = 'Schedule'
         with BytesIO() as b:
             # Use the StringIO object as the filehandle.
             writer = pd.ExcelWriter(b, engine='xlsxwriter',
