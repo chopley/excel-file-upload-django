@@ -28,11 +28,13 @@ def excel_download(request):
     if "GET" == request.method:
         return render(request, 'myapp/index.html', {})
     else:
+
+        sheet_name = 'Schedule'
         excel_file = request.FILES["excel_file"]
-        dfs = pd.read_excel(excel_file, sheet_name='Schedule')
+        dfs = pd.read_excel(excel_file, sheet_name=sheet_name)
         columns = list(dfs.columns)
         r = re.compile(".*Collection")
-        collections = list(filter(r.match, columns))  # Read Note below
+        collections = list(filter(r.match, columns))
 
         output = pd.DataFrame()
         for field in collections:
@@ -41,11 +43,12 @@ def excel_download(request):
             group_val["Collection"] = field
             output = pd.concat([output, group_val])
         output = output.drop(labels=["size", "index"], axis=1)
-        output = output.set_index(['Collection_date', 'Farm', "House"])
+        output = output.set_index(['Collection_date'])
+        output = output.groupby(["Collection_date", "Farm", "House", "Collection"]).agg("count")
 
         timestr = datetime.datetime.now().astimezone(get_localzone()).strftime('%Y%m%d-%H%M%S')
 
-        sheet_name = 'Schedule'
+
         with BytesIO() as b:
             # Use the StringIO object as the filehandle.
             writer = pd.ExcelWriter(b, engine='xlsxwriter',
